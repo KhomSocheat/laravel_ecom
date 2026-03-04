@@ -21,11 +21,24 @@ class AdminLoginController extends Controller
             'password' => 'required'
         ]);
         if ($validator->passes()) {
-            Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password], $request->get('remember'));
+            if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' =>
+            $request->password], $request->get('remember'))) {
+                $admin = Auth::guard('admin')->user();
+                if ($admin->role == 2) {
+
+                    return redirect()->route('admin.dashboard');
+                } else {
+                    $admin = Auth::guard('admin')->logout();
+                    return redirect()->route('admin.login')->with('error', 'You are not authorized to access admin panel.');
+                }
+            } else {
+                return redirect()->route('admin.login')->with('error', 'Either Email/Password is incorrect');
+            }
         } else {
             return redirect()->route('admin.login')
                 ->withErrors($validator)
                 ->withInput($request->only('email'));
         }
     }
+
 }
